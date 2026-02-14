@@ -1,0 +1,19 @@
+{
+  "name": "blackhole",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "build:cli": "pnpm --filter bhole build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "clean": "turbo clean && rm -rf node_modules",
+    "bhole": "node packages/cli/dist/index.js",
+    "web": "pnpm dev --filter=@blackhole/web"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "bhole": "workspace:*",
+    "turbo": "^2.8.8"
+  },
+  "packageManager": "pnpm@9.14.2"
+}

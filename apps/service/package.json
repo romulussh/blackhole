@@ -1,0 +1,1 @@
+{"name":"@blackhole/service","version":"0.0.0","private":true,"scripts":{"build":"go build -o dist/service ./cmd/server","dev":"go run ./cmd/server","lint":"go vet ./...","clean":"go clean -cache && rm -rf dist"}}

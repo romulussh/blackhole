@@ -1,0 +1,34 @@
+# Copy to fly.toml and customize for your self-hosted deployment.
+# Run: fly launch (first time) then fly deploy
+#
+# Replace:
+#   - app name
+#   - BHOLE_CONNECT_HOST / BHOLE_API_HOST with your domain (e.g. tunnel.test.bhole.sh)
+
+app = 'blackhole-yourcompany'
+primary_region = 'ord'
+
+[build]
+
+[env]
+  BHOLE_CONNECT_HOST = 'tunnel.yourdomain.com'
+  BHOLE_API_HOST = 'tunnel.yourdomain.com'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = 'off'
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = '30s'
+    timeout = '15s'
+    grace_period = '60s'
+    method = 'GET'
+    path = '/api/health'
+
+[[vm]]
+  cpu_kind = 'shared'
+  cpus = 1
+  memory_mb = 512

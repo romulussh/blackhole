@@ -1,0 +1,11 @@
+{
+  "extends": "@blackhole/config-typescript/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*"]
+}
