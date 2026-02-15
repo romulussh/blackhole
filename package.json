@@ -8,7 +8,8 @@
     "lint": "turbo lint",
     "clean": "turbo clean && rm -rf node_modules",
     "bhole": "node packages/cli/dist/index.js",
-    "web": "pnpm dev --filter=@blackhole/web"
+    "web": "pnpm dev --filter=@blackhole/web",
+    "tag:service": "node scripts/tag-service.js"
   },
   "devDependencies": {
     "@types/node": "^25.2.3",
