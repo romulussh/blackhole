@@ -9,13 +9,25 @@ export interface HttpTunnelOptions {
   authToken?: string;
 }
 
+const MAX_INSPECTOR_BODY = 32 * 1024; // 32KB max per body for inspector
+
 export interface TunnelRequestInfo {
   method: string;
   path: string;
   bytesIn: number;
   bytesOut: number;
   statusCode?: number;
+  statusText?: string;
   timestamp: Date;
+  clientIP?: string;
+  host?: string;
+  durationMs?: number;
+  requestHeaders?: Record<string, string>;
+  requestBody?: string;
+  requestBodyTruncated?: boolean;
+  responseHeaders?: Record<string, string>;
+  responseBody?: string;
+  responseBodyTruncated?: boolean;
 }
 
 export interface HttpTunnelCallbacks {
@@ -130,26 +142,53 @@ export function createHttpTunnel(
           safeSend(Buffer.from(errResp));
           return;
         }
+        const startMs = performance.now();
+        const clientIP = req.headers["x-real-ip"] ?? req.headers["x-forwarded-for"]?.split(",")[0]?.trim();
+        const host = req.headers["host"];
         forwardToLocal(buf, options.localPort)
           .then((response) => {
-            const info = parseResponseStatus(response);
+            const durationMs = Math.round(performance.now() - startMs);
+            const parsed = parseHttpResponse(response);
+            const reqBody = bodyForInspector(req.body);
+            const resBody = parsed ? bodyForInspector(parsed.body) : { text: "", truncated: false };
             callbacks?.onRequest?.({
               method: req.method,
               path: req.path,
               bytesIn: buf.length,
               bytesOut: response.length,
-              statusCode: info?.statusCode,
+              statusCode: parsed?.statusCode,
+              statusText: parsed?.statusText,
               timestamp: new Date(),
+              clientIP,
+              host,
+              durationMs,
+              requestHeaders: req.headers,
+              requestBody: reqBody.text,
+              requestBodyTruncated: reqBody.truncated,
+              responseHeaders: parsed?.headers,
+              responseBody: resBody.text,
+              responseBodyTruncated: resBody.truncated,
             });
             safeSend(response, { binary: true });
           })
           .catch((err: Error) => {
+            const durationMs = Math.round(performance.now() - startMs);
+            const reqBody = bodyForInspector(req.body);
             callbacks?.onRequest?.({
               method: req.method,
               path: req.path,
               bytesIn: buf.length,
               bytesOut: 0,
               timestamp: new Date(),
+              clientIP,
+              host,
+              durationMs,
+              requestHeaders: req.headers,
+              requestBody: reqBody.text,
+              requestBodyTruncated: reqBody.truncated,
+              responseHeaders: { "content-type": "text/plain" },
+              responseBody: err.message,
+              responseBodyTruncated: false,
             });
             const errResp = `HTTP/1.1 502 Bad Gateway\r\nContent-Type: text/plain\r\n\r\n${err.message}`;
             safeSend(Buffer.from(errResp));
@@ -271,11 +310,53 @@ function parseRequestPath(buf: Buffer): string {
   return path ?? "/";
 }
 
-function parseResponseStatus(buf: Buffer): { statusCode: number } | null {
-  const firstLine = buf.subarray(0, buf.indexOf("\n")).toString();
+interface ParsedResponse {
+  statusCode: number;
+  statusText: string;
+  headers: Record<string, string>;
+  body: Buffer;
+}
+
+function parseHttpResponse(buf: Buffer): ParsedResponse | null {
+  const idx = buf.indexOf("\r\n\r\n");
+  const idxLf = buf.indexOf("\n\n");
+  const sepIdx = idx >= 0 ? idx : idxLf >= 0 ? idxLf : -1;
+  const sepLen = idx >= 0 ? 4 : idxLf >= 0 ? 2 : 0;
+  if (sepIdx === -1) return null;
+
+  const headerSection = buf.subarray(0, sepIdx).toString();
+  const body = buf.subarray(sepIdx + sepLen);
+  const lineSep = idx >= 0 ? "\r\n" : "\n";
+  const lines = headerSection.split(lineSep);
+  const firstLine = lines[0];
+  if (!firstLine || !firstLine.startsWith("HTTP/")) return null;
   const parts = firstLine.split(" ");
-  const code = parseInt(parts[1] ?? "0", 10);
-  return isNaN(code) ? null : { statusCode: code };
+  const statusCode = parseInt(parts[1] ?? "0", 10);
+  const statusText = parts.slice(2).join(" ") || "";
+
+  const headers: Record<string, string> = {};
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line) continue;
+    const colon = line.indexOf(":");
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim().toLowerCase();
+    const value = line.slice(colon + 1).trim();
+    headers[key] = value;
+  }
+
+  return { statusCode, statusText, headers, body };
+}
+
+function bodyForInspector(buf: Buffer): { text: string; truncated: boolean } {
+  if (!buf || buf.length === 0) return { text: "", truncated: false };
+  const truncated = buf.length > MAX_INSPECTOR_BODY;
+  const slice = truncated ? buf.subarray(0, MAX_INSPECTOR_BODY) : buf;
+  try {
+    return { text: slice.toString("utf8"), truncated };
+  } catch {
+    return { text: "[binary " + buf.length + " bytes]", truncated };
+  }
 }
 
 function parseHttpRequest(buf: Buffer): ParsedRequest | null {

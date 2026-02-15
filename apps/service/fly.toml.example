@@ -1,9 +1,7 @@
 # Copy to fly.toml and customize for your self-hosted deployment.
 # Run: fly launch (first time) then fly deploy
 #
-# Replace:
-#   - app name
-#   - BHOLE_CONNECT_HOST / BHOLE_API_HOST with your domain (e.g. tunnel.test.bhole.sh)
+# Replace app name. Add domains via fly certs add; server accepts any host with a cert (no env needed).
 
 app = 'blackhole-yourcompany'
 primary_region = 'ord'
@@ -11,8 +9,6 @@ primary_region = 'ord'
 [build]
 
 [env]
-  BHOLE_CONNECT_HOST = 'tunnel.yourdomain.com'
-  BHOLE_API_HOST = 'tunnel.yourdomain.com'
 
 [http_service]
   internal_port = 8080

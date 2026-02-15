@@ -1,13 +1,14 @@
 {
   "name": "bhole",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.2",
   "type": "module",
   "description": "Self-hostable ngrok alternative - expose local services to the internet",
   "bin": {
     "bhole": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && pnpm run build:dashboard",
+    "build:dashboard": "cd dashboard && pnpm install && pnpm run build",
     "dev": "tsx src/index.ts",
     "lint": "eslint src/",
     "clean": "rm -rf dist",

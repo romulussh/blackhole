@@ -33,7 +33,20 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold">1. Get the service</h2>
+          <h2 className="text-2xl font-semibold">1. Install the CLI</h2>
+          <p className="mt-2 text-white/70">
+            Install the <code className="rounded bg-white/10 px-1">bhole</code> CLI from npm:
+          </p>
+          <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-4 font-mono text-sm">
+            <code className="block text-white/90">npm install -g bhole@alpha</code>
+          </div>
+          <p className="mt-2 text-sm text-white/60">
+            Or run without installing: <code className="rounded bg-white/10 px-1">npx bhole http 3000 --server wss://...</code>
+          </p>
+        </section>
+
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold">2. Get the service</h2>
 
           <h3 className="mt-6 font-medium text-white/90">Option A: Download pre-built binary</h3>
           <p className="mt-2 text-white/70">
@@ -62,7 +75,7 @@ export default function DocsPage() {
         </section>
 
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold">2. Deploy to Fly.io</h2>
+          <h2 className="text-2xl font-semibold">3. Deploy to Fly.io</h2>
           <p className="mt-2 text-white/70">
             No repo or clone required. Deploy the pre-built image from anywhere.
           </p>
@@ -92,42 +105,40 @@ export default function DocsPage() {
             Add the DNS records Fly shows (CNAME to <code className="rounded bg-white/10 px-1">yourapp.fly.dev</code>).
           </p>
 
-          <h3 className="mt-6 font-medium text-white/90">Step 4: Set secrets in Fly</h3>
+          <h3 className="mt-6 font-medium text-white/90">Step 4: Optional — auth token in Fly</h3>
+          <p className="mt-2 text-sm text-white/60">
+            The server accepts any host that has a cert (no env needed). To require a shared secret:
+          </p>
           <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-4 font-mono text-sm space-y-2">
-            <p className="text-white/60"># Your domain</p>
-            <code className="block text-white/90">{`fly secrets set BHOLE_CONNECT_HOST=tunnel.yourdomain.com BHOLE_API_HOST=tunnel.yourdomain.com -a my-tunnel`}</code>
-            <p className="text-white/60 mt-4"># Optional: shared secret (recommended)</p>
             <code className="block text-white/90">{`fly secrets set BHOLE_AUTH_TOKEN=your-secret-here -a my-tunnel`}</code>
           </div>
           <p className="mt-2 text-sm text-white/60">
-            If you set <code className="rounded bg-white/10 px-1">BHOLE_AUTH_TOKEN</code>, the CLI must use the same value (<code className="rounded bg-white/10 px-1">BHOLE_AUTH_TOKEN</code> env or config).
+            If you set <code className="rounded bg-white/10 px-1">BHOLE_AUTH_TOKEN</code>, the CLI must use the same value (env or dashboard config).
           </p>
 
           <h3 className="mt-6 font-medium text-white/90">Step 5: Use the CLI</h3>
           <div className="mt-2 rounded-xl border border-white/10 bg-white/5 p-4 font-mono text-sm space-y-2">
-            <code className="block text-white/90">bhole config set-tunnel-domain tunnel.yourdomain.com</code>
-            <code className="block text-white/90">{`bhole http 3000 --server wss://tunnel.yourdomain.com`}</code>
+            <code className="block text-white/90">bhole config set-server tunnel.yourdomain.com</code>
+            <code className="block text-white/90">bhole http 3000</code>
             <p className="text-white/60 mt-2"># If you set BHOLE_AUTH_TOKEN on the server:</p>
-            <code className="block text-white/90">{`$env:BHOLE_AUTH_TOKEN="your-secret-here"; bhole http 3000 --server wss://tunnel.yourdomain.com`}</code>
+            <code className="block text-white/90">{`$env:BHOLE_AUTH_TOKEN="your-secret-here"; bhole http 3000`}</code>
           </div>
         </section>
 
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold">3. Use the CLI</h2>
-          <p className="mt-2 text-white/70">Point the CLI at your server:</p>
+          <h2 className="text-2xl font-semibold">4. Use the CLI</h2>
+          <p className="mt-2 text-white/70">Configure once, then tunnel:</p>
           <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 font-mono text-sm space-y-2">
-            <p className="text-white/60"># Set your tunnel domain (where public URLs will live)</p>
-            <code className="block text-white/90">bhole config set-tunnel-domain tunnel.yourdomain.com</code>
-            <p className="text-white/60 mt-4"># Expose a local port (use --server to target your host)</p>
-            <code className="block text-white/90">bhole http 3000 --server wss://tunnel.yourdomain.com</code>
+            <code className="block text-white/90">bhole config set-server tunnel.yourdomain.com</code>
+            <code className="block text-white/90">bhole http 3000</code>
           </div>
           <p className="mt-2 text-sm text-white/60">
-            Or set <code className="rounded bg-white/10 px-1">BHOLE_SERVER_URL</code> so you don&apos;t need --server every time.
+            Run <code className="rounded bg-white/10 px-1">bhole dashboard</code> to open a local UI for editing config.
           </p>
         </section>
 
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold">4. Send traffic</h2>
+          <h2 className="text-2xl font-semibold">5. Send traffic</h2>
           <p className="mt-2 text-white/70">
             The CLI shows a URL like <code className="rounded bg-white/10 px-1">https://happy-blue-frog.tunnel.yourdomain.com</code>. Traffic to that URL
             is forwarded to your local app.
@@ -150,8 +161,8 @@ export default function DocsPage() {
             <p className="text-white/60"># Terminal 1: run the service (from where you extracted the binary)</p>
             <code className="block text-white/90">./blackhole-service-linux-amd64</code>
             <p className="text-white/60 mt-4"># Terminal 2: run the CLI</p>
-            <code className="block text-white/90">bhole config set-tunnel-domain localhost</code>
-            <code className="block text-white/90">bhole http 3000 --server ws://localhost:8080</code>
+            <code className="block text-white/90">bhole config set-server localhost:8080</code>
+            <code className="block text-white/90">bhole http 3000</code>
           </div>
           <p className="mt-2 text-sm text-white/60">
             Use the endpoint name shown in the CLI (e.g. <code className="rounded bg-white/10 px-1">elm-beach-leaf</code>) in X-Blackhole-Endpoint.

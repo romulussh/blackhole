@@ -1,4 +1,5 @@
 import { createHttpTunnel } from "../tunnel/http.js";
+import { pushTrafficEvent } from "./dashboardTraffic.js";
 
 const MAX_RETRIES = 2;
 const BASE_DELAY_MS = 2000;
@@ -25,6 +26,9 @@ export async function runTunnelPlain(
             console.log(`URL: ${publicUrl}`);
             console.log(`(or use X-Blackhole-Endpoint: ${endpoint})`);
             resolve();
+          },
+          onRequest: (info) => {
+            pushTrafficEvent({ ...info, endpoint });
           },
           onError: (err) => {
             console.error("Tunnel error:", err.message);

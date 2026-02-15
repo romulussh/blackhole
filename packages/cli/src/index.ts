@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { configCommand } from "./commands/config.js";
+import { dashboardCommand } from "./commands/dashboard.js";
 import { httpCommand } from "./commands/http.js";
 import { tcpCommand } from "./commands/tcp.js";
 import { CLI_VERSION } from "./lib/version.js";
@@ -14,6 +15,7 @@ program
   .version(CLI_VERSION);
 
 program.addCommand(configCommand);
+program.addCommand(dashboardCommand);
 program.addCommand(httpCommand);
 program.addCommand(tcpCommand);
 

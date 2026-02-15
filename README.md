@@ -10,16 +10,16 @@ ngrok alternative. Expose local services to the internet.
 
 Download a pre-built binary from [GitHub Releases](https://github.com/blackhole/blackhole/releases) or deploy the Docker image to Fly.io. See [docs](/docs) for full setup.
 
-### 2. Set your tunnel domain
+### 2. Configure (one time)
 
 ```bash
-npx bhole config set-tunnel-domain tunnel.yourdomain.com
+npx bhole config set-server tunnel.yourdomain.com
 ```
 
 ### 3. Expose a local port
 
 ```bash
-npx bhole http 3000 --server wss://tunnel.yourdomain.com
+npx bhole http 3000
 ```
 
 ### 4. Use your tunnel

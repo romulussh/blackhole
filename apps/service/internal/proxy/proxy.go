@@ -3,7 +3,9 @@ package proxy
 import (
 	"bytes"
 	"io"
+	"net"
 	"net/http"
+	"strings"
 
 	"github.com/blackhole/service/internal/registry"
 )
@@ -57,6 +59,14 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	r.RequestURI = ""
 
+	// Inject client IP for inspector (preserve existing if already proxied)
+	if r.Header.Get("X-Real-IP") == "" && r.Header.Get("X-Forwarded-For") == "" {
+		if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+			r.Header.Set("X-Real-IP", host)
+		} else {
+			r.Header.Set("X-Real-IP", strings.Split(r.RemoteAddr, ":")[0])
+		}
+	}
 	resp, err := tunnel.ForwardRequest(r)
 	if err != nil {
 		http.Error(w, "Tunnel error: "+err.Error(), http.StatusBadGateway)

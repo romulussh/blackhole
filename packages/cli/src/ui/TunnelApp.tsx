@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { render, Text, Box, useInput } from "ink";
 import Spinner from "ink-spinner";
 import { createHttpTunnel, type TunnelRequestInfo } from "../tunnel/http.js";
+import { pushTrafficEvent } from "../lib/dashboardTraffic.js";
 import { getLatestVersion, shouldSuggestUpdate } from "../lib/version.js";
 
 
@@ -88,6 +89,7 @@ export function TunnelApp({
             setBytesIn((b) => b + info.bytesIn);
             setBytesOut((b) => b + info.bytesOut);
             setRecentRequests((prev) => [info, ...prev.slice(0, 4)]);
+            pushTrafficEvent({ ...info, endpoint });
           },
           onError: (err) => {
             setError(err.message);

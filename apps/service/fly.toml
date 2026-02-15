@@ -8,10 +8,6 @@ primary_region = 'ord'
 
 [build]
 
-[env]
-  BHOLE_API_HOST = 'api.bhole.sh'
-  BHOLE_CONNECT_HOST = 'connect.bhole.sh'
-
 [http_service]
   internal_port = 8080
   force_https = true
