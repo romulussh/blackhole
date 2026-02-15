@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/blackhole/service/internal/registry"
@@ -142,13 +143,18 @@ func (s *Server) handleTunnel(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Only one tunnel per endpoint at a time
-	tunnel := &AgentTunnel{conn: conn, endpoint: msg.Endpoint, reg: s.reg, ch: make(chan *responsePayload)}
-	if !s.reg.TryRegister(msg.Endpoint, tunnel, "") {
+	// Normalize so "api" and "API" are the same endpoint; only one tunnel per endpoint at a time
+	ep := strings.ToLower(strings.TrimSpace(msg.Endpoint))
+	if ep == "" {
+		conn.WriteMessage(websocket.TextMessage, []byte(`{"error":"invalid register"}`))
+		return
+	}
+	tunnel := &AgentTunnel{conn: conn, endpoint: ep, reg: s.reg, ch: make(chan *responsePayload)}
+	if !s.reg.TryRegister(ep, tunnel, "") {
 		conn.WriteMessage(websocket.TextMessage, []byte(`{"error":"endpoint already in use"}`))
 		return
 	}
-	defer s.reg.Unregister(msg.Endpoint)
+	defer s.reg.Unregister(ep)
 
 	conn.WriteMessage(websocket.TextMessage, []byte(`{"ok":true}`))
 
