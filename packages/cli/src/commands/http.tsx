@@ -1,8 +1,20 @@
 import net from "net";
+import * as readline from "readline";
 import { Command } from "commander";
-import { loadConfig, getServerUrl, getTunnelDomain } from "../config.js";
+import { loadConfig, saveConfig, getServerUrl, getTunnelDomain } from "../config.js";
 import { runTunnelPlain } from "../lib/tunnelPlain.js";
 import { randomMnemonicId } from "../lib/words.js";
+
+function promptYesNo(question: string): Promise<boolean> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      const trimmed = (answer ?? "").trim().toLowerCase();
+      resolve(trimmed === "" || trimmed === "y" || trimmed === "yes");
+    });
+  });
+}
 
 
 function isPortListening(port: number): Promise<boolean> {
@@ -59,8 +71,8 @@ export const httpCommand = new Command("http")
   .description("Expose a local HTTP server to the internet")
   .argument("<port>", "Local port to expose")
   .option("-s, --server <url>", "Tunnel server URL (overrides config set-server)")
-  .option("-d, --domain <domain>", "Static subdomain (e.g. --domain=myapp)")
-  .option("--subdomain <name>", "Custom subdomain (alias for --domain)")
+  .option("-d, --domain <name>", "Use a static endpoint (add in dashboard first, or confirm when prompted to add it)")
+  .option("--subdomain <name>", "Alias for --domain")
   .action(async (portStr: string, options: { server?: string; domain?: string; subdomain?: string }) => {
     const port = parseInt(portStr, 10);
     if (isNaN(port) || port < 1 || port > 65535) {
@@ -87,6 +99,7 @@ export const httpCommand = new Command("http")
     const domainOrSub = options.domain ?? options.subdomain;
     let endpoint: string;
     let publicUrl: string;
+    const staticEndpoints: string[] = (config.endpoints ?? []).map((e) => (typeof e === "string" ? e : "").trim()).filter(Boolean);
     if (domainOrSub) {
       let hostname = domainOrSub.trim();
       if (hostname.startsWith("http://") || hostname.startsWith("https://")) {
@@ -106,6 +119,18 @@ export const httpCommand = new Command("http")
       if (!endpoint || endpoint.length > 63) {
         console.error("Error: endpoint must be 1–63 characters");
         process.exit(1);
+      }
+      const allowed = staticEndpoints.some((e) => e.toLowerCase() === endpoint.toLowerCase());
+      if (!allowed) {
+        const add = await promptYesNo(
+          `'${endpoint}' is not in your static endpoints. Add it and use it now? (Y/n) `
+        );
+        if (!add) {
+          console.error("Cancelled. Add the endpoint in the dashboard (Gateway → Endpoints) or run again and choose Y.");
+          process.exit(1);
+        }
+        config.endpoints = [...(config.endpoints ?? []), endpoint];
+        saveConfig(config);
       }
     } else {
       endpoint = randomMnemonicId();

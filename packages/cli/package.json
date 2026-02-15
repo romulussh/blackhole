@@ -1,6 +1,6 @@
 {
   "name": "bhole",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "type": "module",
   "description": "Self-hostable ngrok alternative - expose local services to the internet",
   "bin": {

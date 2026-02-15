@@ -16,6 +16,7 @@ export default function Setup() {
   };
 
   const d = domain || "me.bhole.sh";
+  const dnsLabel = d.split(".")[0] || "me";
 
   const steps = [
     {
@@ -32,18 +33,21 @@ export default function Setup() {
     },
     {
       n: 3,
-      title: "Add certs",
+      title: "Add both certs in Fly",
       cmd: `fly certs add ${d} -a my-tunnel\nfly certs add *.${d} -a my-tunnel`,
       id: "c3",
-      hint: "Replace DOMAIN with your domain (e.g. me.bhole.sh)",
+      hint: (
+        <>
+          You need <strong>two certificates</strong> per domain: the domain and its wildcard. Replace the domain with yours (e.g. me.bhole.sh). Run both commands.
+        </>
+      ),
     },
     {
       n: 4,
-      title: "DNS (Vercel / your provider)",
+      title: "DNS: add both CNAMEs at your provider",
       hint: (
         <>
-          Add CNAME records. Name: <code>me</code> and <code>*.me</code> → Value:{" "}
-          <code>my-tunnel.fly.dev</code>
+          You need <strong>two CNAME records</strong> per domain. In your DNS host (Vercel, Cloudflare, etc.): add <code>{dnsLabel}</code> → <code>my-tunnel.fly.dev</code> and <code>*.{dnsLabel}</code> → <code>my-tunnel.fly.dev</code>. Both are required.
         </>
       ),
     },

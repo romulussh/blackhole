@@ -130,7 +130,7 @@ export default function Domains() {
     <>
       <h2>Domains</h2>
       <p className="hint" style={{ marginBottom: "1rem" }}>
-        Add multiple domains that point at the same Blackhole (Fly) app. For each domain: add the cert in Fly and set DNS at your provider. The server accepts any host that has a cert (no env needed).
+        For each domain you use, you must do <strong>two things</strong>: (1) add <strong>two certificates</strong> in Fly — the domain and its wildcard (<code>me.bhole.sh</code> and <code>*.me.bhole.sh</code>). (2) add <strong>two CNAME records</strong> at your DNS provider — one for the base hostname and one for the wildcard. Both are required for the tunnel to work.
       </p>
 
       <div style={{ marginBottom: "1.5rem" }}>
@@ -231,27 +231,38 @@ export default function Domains() {
         <section style={{ marginTop: "2rem", padding: "1rem", background: "#171717", border: "1px solid #262626", borderRadius: 8 }}>
           <h3 style={{ fontSize: "0.95rem", margin: "0 0 0.75rem", color: "#a3a3a3" }}>1. DNS at your domain provider</h3>
           <p className="hint" style={{ marginBottom: "0.75rem" }}>
-            Add these CNAME records for each domain (target is your Fly app). Use <code>@</code> or the subdomain for the root of the domain.
+            You need <strong>two CNAME records per domain</strong>. Add both at your DNS host; target value is your Fly app below.
           </p>
           <ul style={{ margin: 0, paddingLeft: "1.25rem", fontSize: "0.85rem", color: "#e5e5e5" }}>
-            {domains.map((d) => (
-              <li key={d} style={{ marginBottom: "0.35rem" }}>
-                <strong>{d}</strong>: CNAME → <code>{flyTarget ?? "<app>.fly.dev"}</code>
-                {"; "}
-                <code>*.{d}</code> → <code>{flyTarget ?? "<app>.fly.dev"}</code>
-              </li>
-            ))}
+            {domains.map((d) => {
+              const label = d.split(".")[0];
+              return (
+                <li key={d} style={{ marginBottom: "0.75rem" }}>
+                  <strong>{d}</strong>
+                  <ul style={{ margin: "0.25rem 0 0 1rem", paddingLeft: "1rem" }}>
+                    <li>CNAME name <code>{label}</code> → value <code>{flyTarget ?? "<app>.fly.dev"}</code></li>
+                    <li>CNAME name <code>*.{label}</code> → value <code>{flyTarget ?? "<app>.fly.dev"}</code></li>
+                  </ul>
+                </li>
+              );
+            })}
           </ul>
 
-          <h3 style={{ fontSize: "0.95rem", margin: "1.25rem 0 0.75rem", color: "#a3a3a3" }}>2. Fly: add certs for each host</h3>
+          <h3 style={{ fontSize: "0.95rem", margin: "1.25rem 0 0.75rem", color: "#a3a3a3" }}>2. Fly: add both certificates per domain</h3>
           <p className="hint" style={{ marginBottom: "0.5rem" }}>
-            Run for each domain (so Fly issues a cert and validates DNS):
+            You need <strong>two certs per domain</strong> in Fly: the domain and its wildcard. Run both commands for each domain.
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {domains.map((d) => (
-              <div key={d} className="cmd" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <code style={{ flex: 1 }}>fly certs add {d} -a {flyApp.trim() || "<app>"}</code>
-                <button type="button" className="btn-copy" onClick={() => copy(`fly certs add ${d} -a ${flyApp.trim()}`)}>Copy</button>
+              <div key={d} style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                <div className="cmd" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <code style={{ flex: 1 }}>fly certs add {d} -a {flyApp.trim() || "<app>"}</code>
+                  <button type="button" className="btn-copy" onClick={() => copy(`fly certs add ${d} -a ${flyApp.trim()}`)}>Copy</button>
+                </div>
+                <div className="cmd" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <code style={{ flex: 1 }}>fly certs add *.{d} -a {flyApp.trim() || "<app>"}</code>
+                  <button type="button" className="btn-copy" onClick={() => copy(`fly certs add *.${d} -a ${flyApp.trim()}`)}>Copy</button>
+                </div>
               </div>
             ))}
           </div>

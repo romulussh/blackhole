@@ -26,6 +26,24 @@ func New() *Registry {
 	}
 }
 
+// TryRegister associates an endpoint with a tunnel only if the endpoint is not already in use.
+// Returns true if registered, false if endpoint is already taken (caller should reject the new connection).
+// userID is optional; when present, usage is attributed to that user for billing.
+func (r *Registry) TryRegister(endpoint string, t Tunnel, userID string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.tunnels[endpoint] != nil {
+		return false
+	}
+	r.tunnels[endpoint] = t
+	if userID != "" {
+		r.endpointToUser[endpoint] = userID
+	} else {
+		delete(r.endpointToUser, endpoint)
+	}
+	return true
+}
+
 // Register associates an endpoint with a tunnel. Overwrites any existing tunnel for the endpoint.
 // Replacing a tunnel closes the old one; must not call Unregister from Close to avoid deadlock.
 // userID is optional; when present, usage is attributed to that user for billing.

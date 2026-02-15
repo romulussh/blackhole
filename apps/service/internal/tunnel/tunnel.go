@@ -142,8 +142,12 @@ func (s *Server) handleTunnel(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Only one tunnel per endpoint at a time
 	tunnel := &AgentTunnel{conn: conn, endpoint: msg.Endpoint, reg: s.reg, ch: make(chan *responsePayload)}
-	s.reg.Register(msg.Endpoint, tunnel, "")
+	if !s.reg.TryRegister(msg.Endpoint, tunnel, "") {
+		conn.WriteMessage(websocket.TextMessage, []byte(`{"error":"endpoint already in use"}`))
+		return
+	}
 	defer s.reg.Unregister(msg.Endpoint)
 
 	conn.WriteMessage(websocket.TextMessage, []byte(`{"ok":true}`))
